@@ -15,6 +15,14 @@ from sklearn.preprocessing import QuantileTransformer
 # Import your feature extraction modules
 from text_features import engineer_text_features
 from image_features import extract_comprehensive_image_features
+
+# ---for Dynamic path handling ---
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+DATASET_FOLDER = os.path.join(SCRIPT_DIR, '..', 'dataset')
+if not os.path.exists(DATASET_FOLDER):
+    #fallback for Kaggle env
+    DATASET_FOLDER = '/kaggle/input/smartproductpricing/EcomProductPricing/dataset'
+
 # --- Configuration ---
 DATASET_FOLDER = 'dataset'
 TRAIN_DATA_PATH = os.path.join(DATASET_FOLDER, 'train.csv') # Assuming you have this file
