@@ -1,4 +1,9 @@
+
+import sys
+
 import os
+sys.path.append(os.path.dirname(__file__))
+
 import numpy as np
 import pandas as pd
 from scipy.sparse import hstack
@@ -8,14 +13,13 @@ from sklearn.metrics import make_scorer
 from sklearn.preprocessing import QuantileTransformer
 
 # Import your feature extraction modules
-from src.text_features import engineer_text_features
-from src.image_features import extract_comprehensive_image_features
-
+from text_features import engineer_text_features
+from image_features import extract_comprehensive_image_features
 # --- Configuration ---
 DATASET_FOLDER = 'dataset'
 TRAIN_DATA_PATH = os.path.join(DATASET_FOLDER, 'train.csv') # Assuming you have this file
 TEST_DATA_PATH = os.path.join(DATASET_FOLDER, 'test.csv')   # Assuming you have this file
-OUTPUT_PATH = os.path.join(DATASET_FOLDER, 'train.csv')
+OUTPUT_PATH = os.path.join(DATASET_FOLDER, 'test_out.csv')
 
 # --- SMAPE Metric Function ---
 def smape(y_true, y_pred):
