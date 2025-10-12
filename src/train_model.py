@@ -24,10 +24,10 @@ if not os.path.exists(DATASET_FOLDER):
     DATASET_FOLDER = '/kaggle/input/smartproductpricing/EcomProductPricing/dataset'
 
 # --- Configuration ---
-DATASET_FOLDER = 'dataset'
-TRAIN_DATA_PATH = os.path.join(DATASET_FOLDER, 'train.csv') # Assuming you have this file
-TEST_DATA_PATH = os.path.join(DATASET_FOLDER, 'test.csv')   # Assuming you have this file
-OUTPUT_PATH = os.path.join(DATASET_FOLDER, 'test_out.csv')
+#DATASET_FOLDER = 'dataset'
+#TRAIN_DATA_PATH = os.path.join(DATASET_FOLDER, 'train.csv') # Assuming you have this file
+#TEST_DATA_PATH = os.path.join(DATASET_FOLDER, 'test.csv')   # Assuming you have this file
+#OUTPUT_PATH = os.path.join(DATASET_FOLDER, 'test_out.csv')
 
 # --- SMAPE Metric Function ---
 def smape(y_true, y_pred):
