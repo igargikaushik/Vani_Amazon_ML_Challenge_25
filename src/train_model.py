@@ -22,7 +22,7 @@ DATASET_FOLDER = os.path.join(SCRIPT_DIR, '..', 'dataset')
 if not os.path.exists(DATASET_FOLDER):
     #fallback for Kaggle env
     DATASET_FOLDER = '/kaggle/input/smartproductpricing/EcomProductPricing/dataset'
-
+OUTPUT_PATH = os.path.join(DATASET_FOLDER, 'test_out.csv')
 # --- Configuration ---
 #DATASET_FOLDER = 'dataset'
 #TRAIN_DATA_PATH = os.path.join(DATASET_FOLDER, 'train.csv') # Assuming you have this file
@@ -93,8 +93,8 @@ def train_and_predict_pipeline():
 
 
     # Cast to float64 for consistency
-    X_train_image = X_train_image.astype(np.float64)
-    X_test_image = X_test_image.astype(np.float64)
+    X_train_image = X_train_image.astype(np.float32)
+    X_test_image = X_test_image.astype(np.float32)
 
     # --- 5. Feature Integration (Combining) ---
     print("\n🔗 Combining Text and Image Features...")
@@ -110,9 +110,9 @@ def train_and_predict_pipeline():
     lgbm = lgb.LGBMRegressor(
         objective='regression_l1', # Use L1 loss (MAE) which is robust to outliers and similar to SMAPE goal
         metric='mae',
-        n_estimators=1000,
-        learning_rate=0.05,
-        num_leaves=31,
+        n_estimators=400,
+        learning_rate=0.08,
+        num_leaves=16,
         n_jobs=-1,
         random_state=42
     )
@@ -140,7 +140,8 @@ def train_and_predict_pipeline():
     
     # --- 9. Submission File Generation ---
     submission_df = pd.DataFrame({
-        'sample_id': test_df['sample_id'],
+        'id': test_df['id'] if 'id' in test_df.columns else np.arange(len(Y_pred)),
+
         'price': Y_pred
     })
     

@@ -40,6 +40,8 @@ def extract_color_features(image_path):
         dominant_colors = kmeans.cluster_centers_
         
         # Color features
+        features = features.astype(np.float32)
+
         features = {
             'brightness': np.mean(stat.mean),
             'contrast': np.std(stat.mean),
@@ -62,6 +64,9 @@ def extract_color_features(image_path):
                 'color_richness': 0}
 
 def extract_texture_features(image_path):
+    if not image_path or not os.path.exists(image_path):
+     return np.zeros(128)  # or whatever small vector size your texture feature extractor returns
+
     """Extract texture features using OpenCV"""
     try:
         img = cv2.imread(image_path)

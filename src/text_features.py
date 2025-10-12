@@ -339,7 +339,7 @@ def engineer_text_features(df: pd.DataFrame, fit_tfidf=True, tfidf_vectorizer=No
     if fit_tfidf:
         tfidf = TfidfVectorizer(
             ngram_range=(1, 2),
-            max_features=2000,  # Reduced for performance
+            max_features=800,  
             stop_words='english',
             min_df=3,
             sublinear_tf=True
