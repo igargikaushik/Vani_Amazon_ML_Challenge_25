@@ -1,4 +1,4 @@
-import os
+import os 
 import cv2
 import numpy as np
 import pandas as pd
@@ -140,15 +140,15 @@ def load_and_preprocess_image(image_path):
     except Exception as e:
         return None
 
-def extract_deep_features(df, model_name='resnet50', batch_size=32):
-    """Extract deep features using multiple CNN architectures"""
+def extract_deep_features(df, model_name='resnet50', batch_size=256):
+    """Extract deep features using multiple CNN architectures in batches to save memory"""
     if not TF_AVAILABLE:
         print("❌ TensorFlow not available. Returning zero features.")
-        return np.zeros((len(df), 2048))
+        return np.zeros((len(df), 2048 if model_name=='resnet50' else 1280))
     
     print(f"🔥 Initializing {model_name.upper()} for feature extraction...")
     
-    # Choose model architecture
+    # Model setup
     if model_name == 'resnet50':
         base_model = ResNet50(weights='imagenet', include_top=False, pooling='avg')
         preprocess_func = resnet_preprocess
@@ -161,39 +161,29 @@ def extract_deep_features(df, model_name='resnet50', batch_size=32):
         raise ValueError(f"Unsupported model: {model_name}")
     
     model = Model(inputs=base_model.input, outputs=base_model.output)
-    
+
     # Prepare image paths
-    image_paths = []
-    for link in df['image_link']:
-        if pd.notna(link):
-            filename = os.path.basename(link)
-            image_paths.append(os.path.join(IMAGE_DOWNLOAD_FOLDER, filename))
-        else:
-            image_paths.append(None)
+    image_paths = [os.path.join(IMAGE_DOWNLOAD_FOLDER, os.path.basename(link))
+                   if pd.notna(link) else None for link in df['image_link']]
     
-    # Load and preprocess images
-    image_list = []
-    print(f"📸 Loading and preprocessing {len(image_paths)} images...")
+    all_features = []
+    for i in tqdm(range(0, len(image_paths), batch_size), desc="Deep Features"):
+        batch_paths = image_paths[i:i+batch_size]
+        batch_imgs = []
+        for path in batch_paths:
+            img_array = load_and_preprocess_image(path)
+            if img_array is None:
+                img_array = np.zeros(IMAGE_SIZE + (3,))
+            batch_imgs.append(img_array)
+        batch_tensor = np.array(batch_imgs)
+        batch_tensor = preprocess_func(batch_tensor)
+        feats = model.predict(batch_tensor, batch_size=batch_size, verbose=0)
+        all_features.append(feats)
     
-    for path in tqdm(image_paths, desc="Processing Images"):
-        img_array = load_and_preprocess_image(path)
-        if img_array is not None:
-            image_list.append(img_array)
-        else:
-            image_list.append(np.zeros(IMAGE_SIZE + (3,)))
-    
-    if not image_list:
-        return np.zeros((len(df), feature_size))
-    
-    image_batch = np.array(image_list)
-    image_batch = preprocess_func(image_batch)
-    
-    # Extract features
-    print(f"🧠 Extracting deep features with {model_name.upper()}...")
-    features = model.predict(image_batch, batch_size=batch_size, verbose=1)
-    
-    print(f"✅ Deep feature extraction complete. Shape: {features.shape}")
-    return features
+    features_array = np.vstack(all_features)
+    print(f"✅ Deep feature extraction complete. Shape: {features_array.shape}")
+    return features_array
+
 
 def extract_comprehensive_image_features(df: pd.DataFrame, use_deep_features=True, model_name='resnet50'):
     """
