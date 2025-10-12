@@ -82,7 +82,7 @@ def train_and_predict_pipeline():
         train_df, use_deep_features=False
     )
     X_test_image, _ = extract_comprehensive_image_features(
-        test_df, use_deep_features=True, model_name='resnet50'
+        test_df, use_deep_features=False
     )
 
     # Cast to float64 for consistency
