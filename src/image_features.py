@@ -140,7 +140,7 @@ def load_and_preprocess_image(image_path):
     except Exception as e:
         return None
 
-def extract_deep_features(df, model_name='resnet50', batch_size=256):
+def extract_deep_features(df, model_name='resnet50', batch_size=32):
     """Extract deep features using multiple CNN architectures in batches to save memory"""
     if not TF_AVAILABLE:
         print("❌ TensorFlow not available. Returning zero features.")
