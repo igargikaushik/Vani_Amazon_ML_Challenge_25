@@ -75,6 +75,10 @@ def train_and_predict_pipeline():
         tfidf_vectorizer=tfidf_vectorizer,
         analyze_importance=False
     )
+    #align the test features to train
+    X_test_text_sparse = X_test_text_sparse[:, :X_train_text_sparse.shape[1]]
+
+
 
     # --- 4. Image Feature Extraction ---
     print("\n🖼️ Extracting Image Features...")
@@ -84,6 +88,9 @@ def train_and_predict_pipeline():
     X_test_image, _ = extract_comprehensive_image_features(
         test_df, use_deep_features=False
     )
+    #align the test img features to train's 
+    X_test_image = X_test_image[:, :X_train_image.shape[1]]
+
 
     # Cast to float64 for consistency
     X_train_image = X_train_image.astype(np.float64)
