@@ -79,7 +79,7 @@ def train_and_predict_pipeline():
     # --- 4. Image Feature Extraction ---
     print("\n🖼️ Extracting Image Features...")
     X_train_image, _ = extract_comprehensive_image_features(
-        train_df, use_deep_features=True, model_name='resnet50'
+        train_df, use_deep_features=False
     )
     X_test_image, _ = extract_comprehensive_image_features(
         test_df, use_deep_features=True, model_name='resnet50'
