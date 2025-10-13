@@ -90,6 +90,10 @@ def train_and_predict_pipeline():
     )
     #align the test img features to train's 
     X_test_image = X_test_image[:, :X_train_image.shape[1]]
+    # --- Save extracted image features for future reuse ---
+    np.save('X_train_image.npy', X_train_image)
+    np.save('X_test_image.npy', X_test_image)
+    print("✅ Saved image features: X_train_image.npy, X_test_image.npy")
 
 
     # Cast to float64 for consistency
@@ -98,12 +102,31 @@ def train_and_predict_pipeline():
 
     # --- 5. Feature Integration (Combining) ---
     print("\n🔗 Combining Text and Image Features...")
+    X_train = X_train.astype(np.float32)
+    X_test = X_test.astype(np.float32)
     # Combine sparse text features with dense image features
     X_train = hstack([X_train_text_sparse, X_train_image])
     X_test = hstack([X_test_text_sparse, X_test_image])
+    # ✅ Ensure train and test feature alignment
+    if X_test.shape[1] != X_train.shape[1]:
+        print(f"⚠️ Feature mismatch detected! Aligning test features ({X_test.shape[1]}) → train ({X_train.shape[1]})")
+        from scipy.sparse import csr_matrix
+        if X_test.shape[1] < X_train.shape[1]:
+          diff = X_train.shape[1] - X_test.shape[1]
+          X_test = hstack([X_test, csr_matrix((X_test.shape[0], diff))])
+        elif X_test.shape[1] > X_train.shape[1]:
+          X_test = X_test[:, :X_train.shape[1]]
+        print(f"✅ After alignment: train={X_train.shape}, test={X_test.shape}")
     
+    assert X_train.shape[1] == X_test.shape[1], (
+    f"❌ Feature count mismatch: Train={X_train.shape[1]}, Test={X_test.shape[1]}"
+    )
     print(f"Final Train Feature Shape: {X_train.shape}")
     print(f"Final Test Feature Shape: {X_test.shape}")
+    print("\n💾 Saving final combined features...")
+    np.save('train_features.npy', X_train.toarray())
+    np.save('test_features.npy', X_test.toarray())
+    print("✅ Saved: train_features.npy, test_features.npy")
 
     # --- 6. Model Training (LightGBM) ---
     print("\n🧠 Training LightGBM Regressor...")
@@ -162,3 +185,4 @@ def train_and_predict_pipeline():
 
 if __name__ == "__main__":
     train_and_predict_pipeline()
+  

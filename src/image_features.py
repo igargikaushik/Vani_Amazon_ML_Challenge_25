@@ -225,8 +225,20 @@ def extract_comprehensive_image_features(df: pd.DataFrame, use_deep_features=Tru
     """
     Extract comprehensive image features for price prediction
     """
-    print("🚀 Starting Comprehensive Image Feature Extraction...")
-    
+    print("Starting Comprehensive Image Feature Extraction...")
+
+    default_color = {
+        'brightness': 0, 'contrast': 0, 'color_variance': 0,
+        'dominant_color_1_r': 0, 'dominant_color_1_g': 0, 'dominant_color_1_b': 0,
+        'dominant_color_2_r': 0, 'dominant_color_2_g': 0, 'dominant_color_2_b': 0,
+        'color_richness': 0
+    }
+    default_texture = {'texture_variance': 0, 'edge_density': 0, 'gradient_magnitude': 0}
+    default_composition = {'aspect_ratio': 1.0, 'center_brightness': 0,
+                           'center_vs_edge_contrast': 0, 'image_complexity': 0}
+    default_packaging = {'gold_presence': 0, 'silver_presence': 0, 'black_presence': 0,
+                         'white_presence': 0, 'color_saturation': 0}
+
     # Prepare image paths
     image_paths = []
     for link in df['image_link']:
@@ -235,80 +247,56 @@ def extract_comprehensive_image_features(df: pd.DataFrame, use_deep_features=Tru
             image_paths.append(os.path.join(IMAGE_DOWNLOAD_FOLDER, filename))
         else:
             image_paths.append(None)
-    
-    # Extract traditional image features
-    print("🎨 Extracting color features...")
+
+    # --- Extract traditional features ---
     color_features_list = []
-    for path in tqdm(image_paths, desc="Color Features"):
-        if path and os.path.exists(path):
-            color_features_list.append(extract_color_features(path))
-        else:
-            color_features_list.append(extract_color_features(None))
-    
-    print("🔍 Extracting texture features...")
     texture_features_list = []
-    for path in tqdm(image_paths, desc="Texture Features"):
-        if path and os.path.exists(path):
-            texture_features_list.append(extract_texture_features(path))
-        else:
-            texture_features_list.append(extract_texture_features(None))
-    
-    print("📐 Extracting composition features...")
     composition_features_list = []
-    for path in tqdm(image_paths, desc="Composition Features"):
-        if path and os.path.exists(path):
-            composition_features_list.append(extract_composition_features(path))
-        else:
-            composition_features_list.append(extract_composition_features(None))
-    
-    print("📦 Extracting packaging features...")
     packaging_features_list = []
-    for path in tqdm(image_paths, desc="Packaging Features"):
-        if path and os.path.exists(path):
-            packaging_features_list.append(extract_packaging_features(path))
-        else:
-            packaging_features_list.append(extract_packaging_features(None))
-    
+
+    for path in tqdm(image_paths, desc="Traditional Features"):
+        # Color
+        color_features_list.append(extract_color_features(path) if path and os.path.exists(path) else default_color)
+        # Texture
+        texture_features_list.append(extract_texture_features(path) if path and os.path.exists(path) else default_texture)
+        # Composition
+        composition_features_list.append(extract_composition_features(path) if path and os.path.exists(path) else default_composition)
+        # Packaging
+        packaging_features_list.append(extract_packaging_features(path) if path and os.path.exists(path) else default_packaging)
+
     # Combine traditional features
-    traditional_features = []
-    for i in range(len(df)):
-      combined = np.concatenate([
-        list(color_features_list[i].values()),
-        list(texture_features_list[i].values()),
-        list(composition_features_list[i].values()),
-        list(packaging_features_list[i].values())
-      ])
-      traditional_features.append(combined)
+    traditional_features = np.array([
+        np.concatenate([
+            list(color_features_list[i].values()),
+            list(texture_features_list[i].values()),
+            list(composition_features_list[i].values()),
+            list(packaging_features_list[i].values())
+        ]) for i in range(len(df))
+    ], dtype=np.float32)
 
-    traditional_features = np.vstack(traditional_features).astype(np.float32)
+    print(f"✅ Traditional features extracted: {traditional_features.shape}")
 
-    print(f"✅ Traditional image features extracted: {traditional_features.shape}")
-
-    # Extract deep features if requested
+    # --- Extract deep features ---
     if use_deep_features:
         deep_features = extract_deep_features(df, model_name=model_name)
-        
-        # Combine traditional and deep features
+        # Ensure deep features match expected size
+        if deep_features.shape[1] < (2048 if model_name=='resnet50' else 1280):
+            # pad missing columns with zeros
+            missing = (2048 if model_name=='resnet50' else 1280) - deep_features.shape[1]
+            deep_features = np.hstack([deep_features, np.zeros((deep_features.shape[0], missing), dtype=np.float32)])
         final_features = np.hstack([traditional_features, deep_features])
     else:
         final_features = traditional_features
-    
-    print(f"✅ Comprehensive image feature extraction complete!")
-    print(f"   📏 Traditional features: {traditional_features.shape[1]}")
+
+    # --- Feature names ---
+    feature_names = list(default_color.keys()) + list(default_texture.keys()) + \
+                    list(default_composition.keys()) + list(default_packaging.keys())
     if use_deep_features:
-        print(f"   🧠 Deep features: {deep_features.shape[1]}")
-    print(f"   🎯 Total features: {final_features.shape[1]}")
-    print(f"   💾 Memory usage: {final_features.nbytes / 1024 / 1024:.1f} MB")
-    
-    # Create feature names for reference
-    feature_names = (list(color_features_list[0].keys()) + 
-                    list(texture_features_list[0].keys()) +
-                    list(composition_features_list[0].keys()) +
-                    list(packaging_features_list[0].keys()))
-    
-    if use_deep_features:
-        feature_names.extend([f'{model_name}_feature_{i}' for i in range(deep_features.shape[1])])
-    
+        feature_size = 2048 if model_name=='resnet50' else 1280
+        feature_names.extend([f"{model_name}_feature_{i}" for i in range(feature_size)])
+
+    print(f"✅ Comprehensive features ready. Total features: {final_features.shape[1]}")
+
     return final_features, feature_names
 
 if __name__ == "__main__":
