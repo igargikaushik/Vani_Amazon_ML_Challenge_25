@@ -44,7 +44,18 @@ Returns:
     dict: Contains features like brightness, contrast, color variance,
           dominant colors, and color richness."""
     if not _safe_exists(image_path):
-        return np.zeros(6, dtype=np.float32)   
+       return {
+        'brightness': 0,
+        'contrast': 0,
+        'color_variance': 0,
+        'dominant_color_1_r': 0,
+        'dominant_color_1_g': 0,
+        'dominant_color_1_b': 0,
+        'dominant_color_2_r': 0,
+        'dominant_color_2_g': 0,
+        'dominant_color_2_b': 0,
+        'color_richness': 0
+    }   
     try:
         img = Image.open(image_path).convert('RGB')
         
