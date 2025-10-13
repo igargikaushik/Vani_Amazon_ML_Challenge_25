@@ -15,16 +15,34 @@ try:
     from tensorflow.keras.models import Model
     from tensorflow.keras.utils import img_to_array
     TF_AVAILABLE = True
-except ImportError:
-    print("⚠️  TensorFlow not available. Install with: pip install tensorflow")
+except Exception:
     TF_AVAILABLE = False
 
 # --- Configuration ---
 IMAGE_DOWNLOAD_FOLDER = 'images'
 IMAGE_SIZE = (224, 224)
 
+
+#utilities-
+def _safe_exists(path):
+    return bool(path) and os.path.exists(path)
+
+def safe_load_pil(image_path, size=IMAGE_SIZE):
+    """Return numpy RGB array or None if not available."""
+    if not _safe_exists(image_path):
+        return None
+    try:
+        img = Image.open(image_path).convert('RGB').resize(size)
+        return np.array(img)
+    except Exception:
+        return None
 def extract_color_features(image_path):
-    """Extract color-based features that correlate with product pricing"""
+        
+    """Extract color-based features that correlate with product pricing
+    Returns: np.array of shape (6,) -> [mean_r, mean_g, mean_b, std_r, std_g, std_b]
+    Lightweight and robust."""
+    if not _safe_exists(image_path):
+        return np.zeros(6, dtype=np.float32)   
     try:
         img = Image.open(image_path).convert('RGB')
         
@@ -40,7 +58,7 @@ def extract_color_features(image_path):
         dominant_colors = kmeans.cluster_centers_
         
         # Color features
-        features = features.astype(np.float32)
+       # features = features.astype(np.float32)
 
         features = {
             'brightness': np.mean(stat.mean),
@@ -65,7 +83,7 @@ def extract_color_features(image_path):
 
 def extract_texture_features(image_path):
     if not image_path or not os.path.exists(image_path):
-     return np.zeros(128)  # or whatever small vector size your texture feature extractor returns
+     return {'texture_variance': 0, 'edge_density': 0, 'gradient_magnitude': 0}
 
     """Extract texture features using OpenCV"""
     try:
