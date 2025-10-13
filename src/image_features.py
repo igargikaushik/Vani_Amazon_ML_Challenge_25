@@ -38,9 +38,11 @@ def safe_load_pil(image_path, size=IMAGE_SIZE):
         return None
 def extract_color_features(image_path):
         
-    """Extract color-based features that correlate with product pricing
-    Returns: np.array of shape (6,) -> [mean_r, mean_g, mean_b, std_r, std_g, std_b]
-    Lightweight and robust."""
+    """Extract color-based features that correlate with product pricing.
+
+Returns:
+    dict: Contains features like brightness, contrast, color variance,
+          dominant colors, and color richness."""
     if not _safe_exists(image_path):
         return np.zeros(6, dtype=np.float32)   
     try:
@@ -259,19 +261,18 @@ def extract_comprehensive_image_features(df: pd.DataFrame, use_deep_features=Tru
     # Combine traditional features
     traditional_features = []
     for i in range(len(df)):
-     combined = np.concatenate([
-        np.array(color_features_list[i]).ravel(),
-        np.array(texture_features_list[i]).ravel(),
-        np.array(composition_features_list[i]).ravel(),
-        np.array(packaging_features_list[i]).ravel()
-    ])
-    traditional_features.append(combined)
+      combined = np.concatenate([
+        list(color_features_list[i].values()),
+        list(texture_features_list[i].values()),
+        list(composition_features_list[i].values()),
+        list(packaging_features_list[i].values())
+      ])
+      traditional_features.append(combined)
 
     traditional_features = np.vstack(traditional_features).astype(np.float32)
 
-    print(f"Traditional image features extracted: {traditional_features.shape}")
+    print(f"✅ Traditional image features extracted: {traditional_features.shape}")
 
-    
     # Extract deep features if requested
     if use_deep_features:
         deep_features = extract_deep_features(df, model_name=model_name)
@@ -302,57 +303,54 @@ def extract_comprehensive_image_features(df: pd.DataFrame, use_deep_features=Tru
 if __name__ == "__main__":
     print("🎯 Image Feature Extraction for Production")
     print("=" * 50)
-    
+
     DATASET_FOLDER = 'dataset'
     TRAIN_DATA_PATH = os.path.join(DATASET_FOLDER, 'train.csv')
     TEST_DATA_PATH = os.path.join(DATASET_FOLDER, 'test.csv')
-    
+
     if not os.path.exists(IMAGE_DOWNLOAD_FOLDER):
         print(f"❌ Error: Image folder '{IMAGE_DOWNLOAD_FOLDER}' not found.")
         print("   Please download images first using data_setup.py")
         exit()
-    
-    # Load training data
+
+    # --- Train Features ---
     if os.path.exists(TRAIN_DATA_PATH):
         print(f"📂 Loading training data from: {TRAIN_DATA_PATH}")
         train_df = pd.read_csv(TRAIN_DATA_PATH)
         print(f"   ✓ Loaded {len(train_df)} training samples")
-        
-        # Extract training features
+
         train_features, feature_names = extract_comprehensive_image_features(
             train_df, use_deep_features=True, model_name='resnet50'
         )
         print(f"   ✓ Training features shape: {train_features.shape}")
-        
-        # Extract test features if available
-        if os.path.exists(TEST_DATA_PATH):
-            print(f"📂 Loading test data from: {TEST_DATA_PATH}")
-            test_df = pd.read_csv(TEST_DATA_PATH)
-            print(f"   ✓ Loaded {len(test_df)} test samples")
-            
-            test_features, _ = extract_comprehensive_image_features(
-                test_df, use_deep_features=True, model_name='resnet50'
-            )
-            print(f"   ✓ Test features shape: {test_features.shape}")
     else:
-        print(f"❌ Error: Could not find train.csv in 'dataset/' folder")
-        exit()
-        
-        # Extract comprehensive features
-        image_features, feature_names = extract_comprehensive_image_features(
+        print(f"❌ Train CSV not found!")
+
+    # --- Test Features ---
+    if os.path.exists(TEST_DATA_PATH):
+        print(f"📂 Loading test data from: {TEST_DATA_PATH}")
+        test_df = pd.read_csv(TEST_DATA_PATH)
+        print(f"   ✓ Loaded {len(test_df)} test samples")
+
+        test_features, _ = extract_comprehensive_image_features(
             test_df, use_deep_features=True, model_name='resnet50'
         )
-        
+        print(f"   ✓ Test features shape: {test_features.shape}")
+    else:
+        print(f"❌ Test CSV not found!")
+
+    # Optional: Feature Analysis for test set
+    if 'test_df' in locals():
         print("\n" + "=" * 50)
         print("📊 FEATURE ANALYSIS")
         print("=" * 50)
-        print(f"Feature matrix shape: {image_features.shape}")
+        print(f"Feature matrix shape: {test_features.shape}")
         print(f"Sample features (first 5 samples, first 10 features):")
-        print(image_features[:5, :10])
-        
+        print(test_features[:5, :10])
+
         print(f"\n🏷️  Feature Names (first 20):")
         for i, name in enumerate(feature_names[:20]):
             print(f"   {i+1:2d}. {name}")
-        
-        print("\n✅ Enhanced image feature extraction completed!")
-        print("🚀 Ready for multimodal price prediction!")
+
+    print("\n✅ Enhanced image feature extraction completed!")
+    print("🚀 Ready for multimodal price prediction!")

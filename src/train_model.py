@@ -115,12 +115,12 @@ def train_and_predict_pipeline():
         metric='mae',
         n_estimators=400,
         learning_rate=0.08,
-        num_leaves=16,
+        num_leaves=32,
         n_jobs=-1,
         random_state=42
     )
 
-    lgbm.fit(X_train, Y_train_log)
+    lgbm.fit(X_train, Y_train_log, verbose=50)
 
     # --- 7. Prediction ---
     print("\n🔮 Generating Predictions...")
