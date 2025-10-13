@@ -22,7 +22,7 @@ DATASET_FOLDER = os.path.join(SCRIPT_DIR, '..', 'dataset')
 if not os.path.exists(DATASET_FOLDER):
     #fallback for Kaggle env
     DATASET_FOLDER = '/kaggle/input/smartproductpricing/EcomProductPricing/dataset'
-OUTPUT_PATH = os.path.join(DATASET_FOLDER, 'test_out.csv')
+OUTPUT_PATH = '/kaggle/working/test_out.csv'
 # --- Configuration ---
 #DATASET_FOLDER = 'dataset'
 #TRAIN_DATA_PATH = os.path.join(DATASET_FOLDER, 'train.csv') # Assuming you have this file
@@ -83,7 +83,7 @@ def train_and_predict_pipeline():
     # --- 4. Image Feature Extraction ---
     print("\n🖼️ Extracting Image Features...")
     X_train_image, _ = extract_comprehensive_image_features(
-        train_df, use_deep_features=False
+        train_df, use_deep_features=False, model_name='efficientnet'
     )
     X_test_image, _ = extract_comprehensive_image_features(
         test_df, use_deep_features=False
@@ -108,6 +108,9 @@ def train_and_predict_pipeline():
     # --- 6. Model Training (LightGBM) ---
     print("\n🧠 Training LightGBM Regressor...")
     lgbm = lgb.LGBMRegressor(
+        device='gpu',
+        gpu_platform_id=0,
+        gpu_device_id=0,
         objective='regression_l1', # Use L1 loss (MAE) which is robust to outliers and similar to SMAPE goal
         metric='mae',
         n_estimators=400,
