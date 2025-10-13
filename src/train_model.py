@@ -102,12 +102,12 @@ def train_and_predict_pipeline():
 
     # --- 5. Feature Integration (Combining) ---
     print("\n🔗 Combining Text and Image Features...")
-    X_train = X_train.astype(np.float32)
-    X_test = X_test.astype(np.float32)
+
+
     # Combine sparse text features with dense image features
     X_train = hstack([X_train_text_sparse, X_train_image])
     X_test = hstack([X_test_text_sparse, X_test_image])
-    # ✅ Ensure train and test feature alignment
+    #  Ensure train and test feature alignment
     if X_test.shape[1] != X_train.shape[1]:
         print(f"⚠️ Feature mismatch detected! Aligning test features ({X_test.shape[1]}) → train ({X_train.shape[1]})")
         from scipy.sparse import csr_matrix
@@ -119,7 +119,7 @@ def train_and_predict_pipeline():
         print(f"✅ After alignment: train={X_train.shape}, test={X_test.shape}")
     
     assert X_train.shape[1] == X_test.shape[1], (
-    f"❌ Feature count mismatch: Train={X_train.shape[1]}, Test={X_test.shape[1]}"
+        f"❌ Feature count mismatch: Train={X_train.shape[1]}, Test={X_test.shape[1]}"
     )
     print(f"Final Train Feature Shape: {X_train.shape}")
     print(f"Final Test Feature Shape: {X_test.shape}")
