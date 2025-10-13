@@ -259,11 +259,18 @@ def extract_comprehensive_image_features(df: pd.DataFrame, use_deep_features=Tru
     # Combine traditional features
     traditional_features = []
     for i in range(len(df)):
-        combined = {**color_features_list[i], **texture_features_list[i], 
-                   **composition_features_list[i], **packaging_features_list[i]}
-        traditional_features.append(list(combined.values()))
-    
-    traditional_features = np.array(traditional_features)
+     combined = np.concatenate([
+        np.array(color_features_list[i]).ravel(),
+        np.array(texture_features_list[i]).ravel(),
+        np.array(composition_features_list[i]).ravel(),
+        np.array(packaging_features_list[i]).ravel()
+    ])
+    traditional_features.append(combined)
+
+    traditional_features = np.vstack(traditional_features).astype(np.float32)
+
+    print(f"Traditional image features extracted: {traditional_features.shape}")
+
     
     # Extract deep features if requested
     if use_deep_features:
