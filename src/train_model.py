@@ -143,7 +143,7 @@ def train_and_predict_pipeline():
         random_state=42
     )
 
-    lgbm.fit(X_train, Y_train_log, verbose=50)
+    lgbm.fit(X_train, Y_train_log)
 
     # --- 7. Prediction ---
     print("\n🔮 Generating Predictions...")
