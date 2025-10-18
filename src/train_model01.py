@@ -136,9 +136,9 @@ def train_and_predict_pipeline():
         gpu_device_id=0,
         objective='regression_l1', # Use L1 loss (MAE) which is robust to outliers and similar to SMAPE goal
         metric='mae',
-        n_estimators=400,
-        learning_rate=0.08,
-        num_leaves=32,
+        n_estimators=1000,
+        learning_rate=0.05,
+        num_leaves=64,
         n_jobs=-1,
         random_state=42
     )
@@ -166,7 +166,7 @@ def train_and_predict_pipeline():
     
     # --- 9. Submission File Generation ---
     submission_df = pd.DataFrame({
-        'id': test_df['id'] if 'id' in test_df.columns else np.arange(len(Y_pred)),
+        'sample_id': test_df['sample_id'] ,
 
         'price': Y_pred
     })

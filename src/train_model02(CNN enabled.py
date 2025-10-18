@@ -3,7 +3,6 @@ import sys
 
 import os
 sys.path.append(os.path.dirname(__file__))
-
 import numpy as np
 import pandas as pd
 from scipy.sparse import hstack
@@ -25,12 +24,12 @@ if not os.path.exists(DATASET_FOLDER):
     #fallback for Kaggle env
     DATASET_FOLDER = '/kaggle/input/smartproductpricing/EcomProductPricing/dataset'
 OUTPUT_PATH = '/kaggle/working/test_out.csv'
+
 # --- Configuration ---
 #DATASET_FOLDER = 'dataset'
 #TRAIN_DATA_PATH = os.path.join(DATASET_FOLDER, 'train.csv') # Assuming you have this file
 #TEST_DATA_PATH = os.path.join(DATASET_FOLDER, 'test.csv')   # Assuming you have this file
 #OUTPUT_PATH = os.path.join(DATASET_FOLDER, 'test_out.csv')
-
 # --- SMAPE Metric Function ---
 def smape(y_true, y_pred):
     """Symmetric Mean Absolute Percentage Error (SMAPE)"""
@@ -131,7 +130,7 @@ def train_and_predict_pipeline():
     np.save('test_features.npy', X_test.toarray())
     print("✅ Saved: train_features.npy, test_features.npy")
 
-
+   
     # --- 6. Model Training (LightGBM) ---
     print("\n Training LightGBM Regressor...")
     lgbm = lgb.LGBMRegressor(
@@ -140,8 +139,8 @@ def train_and_predict_pipeline():
         gpu_device_id=0,
         objective='regression_l1', 
         metric='mae',
-        n_estimators=1000,
-        learning_rate=0.05,
+        n_estimators=2000,
+        learning_rate=0.03,
         num_leaves=64,
         max_depth=-1,
         subsample=0.8,
@@ -153,13 +152,15 @@ def train_and_predict_pipeline():
         random_state=42
     )
 
-
+    X_train_part, X_valid, Y_train_part, Y_valid = train_test_split(
+      X_train, Y_train_log, test_size=0.1, random_state=42
+    )
 
     lgbm.fit(
-      X_train, Y_train_log,
-      eval_set=[(X_train, Y_train_log)],
-      eval_metric='mae',
-      callbacks=[early_stopping(stopping_rounds=50)]
+     X_train_part, Y_train_part,
+     eval_set=[(X_valid, Y_valid)],
+     eval_metric='mae',
+     callbacks=[early_stopping(stopping_rounds=50)]
 )
 
     # --- 7. Prediction ---
@@ -183,7 +184,7 @@ def train_and_predict_pipeline():
     
     # --- 9. Submission File Generation ---
     submission_df = pd.DataFrame({
-        'id': test_df['id'] if 'id' in test_df.columns else np.arange(len(Y_pred)),
+        'sample_id': test_df['sample_id'] ,
 
         'price': Y_pred
     })
